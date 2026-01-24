@@ -1,4 +1,5 @@
 :root {
+<<<<<<< HEAD
   --primary: #008080;
   /* Teal */
   --primary-light: #20B2AA;
@@ -7,6 +8,19 @@
   --text-dark: #2C3E50;
   --text-light: #7F8C8D;
   box-shadow: 0 0 0 0 rgba(0, 128, 128, 0.4);
+=======
+  --primary: #146e6e;
+  /* Teal */
+  --primary-light: #20B2AA;
+  --secondary: #3cd0c2;
+  --accent: #E0F7FA;
+  --text-dark: #2C3E50;
+  --text-light: #7F8C8D;
+  --bg-color: #F5F5F0;
+  --white: #ffffff;
+  --glass: rgba(255, 255, 255, 0.8);
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
 }
 
 @keyframes pulse-soft {
@@ -23,6 +37,35 @@
   }
 }
 
+<<<<<<< HEAD
+=======
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-15px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
 .floating {
   animation: float 6s ease-in-out infinite;
 }
@@ -31,6 +74,7 @@
   animation: float 4s ease-in-out infinite;
 }
 
+<<<<<<< HEAD
 /* Navbar */
 nav {
   position: fixed;
@@ -493,6 +537,17 @@ nav {
 .lang-card h3 {
   font-size: 1.2rem;
   margin: 0;
+=======
+/* Home Page Specific */
+.home-page {
+  animation: fadeIn 0.8s ease-out;
+}
+
+body {
+  background-color: var(--bg-color);
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
 }
 
 /* Language Visibility Logic */
@@ -511,6 +566,7 @@ html[dir="rtl"] {
 
 html[dir="ltr"] {
   text-align: left;
+<<<<<<< HEAD
 }
 
 html[dir="rtl"] .remedy-card {
@@ -760,4 +816,6 @@ html[dir="rtl"] .auth-input-group input {
 
 [dir="rtl"] .remedy-box:hover {
   transform: translateX(-5px);
+=======
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
 }

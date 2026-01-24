@@ -1,0 +1,100 @@
+/* Navbar */
+nav {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background: var(--glass);
+    backdrop-filter: blur(30px);
+    z-index: 1000;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(0, 128, 128, 0.1);
+}
+
+.logo {
+    font-size: clamp(1.5rem, 4vw, 1.8rem);
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-dark);
+    font-weight: 500;
+    transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.nav-links a.active {
+    border-bottom: 2px solid var(--primary);
+}
+
+.nav-btn {
+    padding: 0.6rem 1.5rem;
+    background: var(--primary);
+    color: var(--white) !important;
+    border-radius: 50px;
+    box-shadow: 0 5px 15px rgba(0, 128, 128, 0.3);
+    transition: all 0.3s ease;
+}
+
+.nav-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 128, 128, 0.4);
+}
+
+/* Fix Language Conversion Icon Spacing */
+nav {
+    padding-right: 2rem;
+    padding-left: 2rem;
+    padding-bottom: 1rem;
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+#langToggle {
+    color: var(--primary) !important;
+}
+
+#langToggle i {
+    margin: 0 2px;
+    color: var(--primary) !important;
+    font-size: 1.2rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+    .nav-links {
+        display: none;
+        /* Simple mobile hide for now */
+    }
+}
+
+@media (max-width: 1366px) {
+    nav {
+        padding-right: 2.5rem;
+    }
+}

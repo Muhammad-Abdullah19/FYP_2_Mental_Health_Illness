@@ -1,0 +1,102 @@
+/* Hero Section */
+.hero {
+    min-height: 70vh;
+    background: linear-gradient(to bottom, var(--bg-color), var(--accent));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8rem 5% 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-content {
+    flex: 1;
+    max-width: 600px;
+    z-index: 2;
+}
+
+.hero h1 {
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    margin-bottom: 1.5rem;
+    line-height: 1.2;
+}
+
+.hero p {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: var(--text-light);
+    margin-bottom: 2.5rem;
+}
+
+.cta-btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: var(--primary);
+    color: var(--white);
+    text-decoration: none;
+    border-radius: 50px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    box-shadow: var(--shadow);
+    animation: pulse-soft 2s infinite;
+    transition: transform 0.3s;
+}
+
+.cta-btn:hover {
+    transform: scale(1.05);
+}
+
+.hero-visual {
+    flex: 1;
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
+.doctor-img {
+    width: 100%;
+    max-width: 500px;
+    border-radius: 20px;
+    /* Placeholder for illustration */
+    background: url('https://img.freepik.com/free-vector/doctor-character-background_1270-84.jpg?w=826&t=st=1701000000~exp=1701000600~hmac=xyz') center/cover;
+    height: 400px;
+    /* Fallback height */
+    box-shadow: var(--shadow);
+    z-index: 2;
+}
+
+/* Using a gradient circle as a placeholder for the doctor image if external image fails or for style */
+.hero-blob {
+    position: absolute;
+    width: clamp(300px, 50vw, 500px);
+    height: clamp(300px, 50vw, 500px);
+    background: var(--primary);
+    opacity: 0.3;
+    z-index: 1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+}
+
+.hero-icon-container {
+    font-size: clamp(8rem, 15vw, 15rem);
+    color: var(--primary);
+    z-index: 2;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .hero {
+        flex-direction: column-reverse;
+        text-align: center;
+        padding-top: 6rem;
+    }
+
+    .hero-content {
+        margin-top: 2rem;
+    }
+}

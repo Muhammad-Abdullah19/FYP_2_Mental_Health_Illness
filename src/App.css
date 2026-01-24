@@ -11,9 +11,17 @@
   will-change: filter;
   transition: filter 300ms;
 }
+<<<<<<< HEAD
 .logo:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
+=======
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
 .logo.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
@@ -22,6 +30,10 @@
   from {
     transform: rotate(0deg);
   }
+<<<<<<< HEAD
+=======
+
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
   to {
     transform: rotate(360deg);
   }
@@ -34,9 +46,17 @@
 }
 
 .card {
+<<<<<<< HEAD
   padding: 2em;
+=======
+  padding: 1em;
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)
 }
 
 .read-the-docs {
   color: #888;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> b833b64 (feat: Initialize front-end application with core pages, components, a multilingual chatbot, and authentication features.)

@@ -1,0 +1,15 @@
+/* Footer */
+footer {
+    background: var(--primary);
+    color: var(--white);
+    padding: 1rem 5%;
+    text-align: center;
+}
+
+.footer-content {
+    margin-bottom: 0.5rem;
+}
+
+.footer-copyright {
+    margin-top: 0.5rem;
+}

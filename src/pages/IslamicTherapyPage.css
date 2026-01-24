@@ -1,0 +1,11 @@
+/* Islamic Therapy Page Specific */
+.islamic-therapy-page {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.remedies-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+}

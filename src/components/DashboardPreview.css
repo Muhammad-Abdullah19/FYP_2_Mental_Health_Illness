@@ -1,0 +1,26 @@
+/* Dashboard & Stats */
+.dashboard-preview {
+    padding: 5rem 5%;
+    background: var(--bg-color);
+}
+
+.stats-container {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.stat-card {
+    background: var(--accent);
+    padding: 2rem;
+    border-radius: 20px;
+    text-align: center;
+    min-width: 200px;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary);
+}

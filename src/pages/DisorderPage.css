@@ -1,0 +1,24 @@
+/* Disorder Page Specific */
+.disorder-page {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.remedies-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+.remedy-box {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.remedy-box:hover {
+    transform: translateX(5px);
+    box-shadow: 2px 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+[dir="rtl"] .remedy-box:hover {
+    transform: translateX(-5px);
+}

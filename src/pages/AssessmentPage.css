@@ -1,0 +1,57 @@
+/* Assessment Page Specific */
+.assessment-page {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.option-btn {
+    transition: all 0.3s ease;
+}
+
+.option-btn:hover {
+    border-color: var(--primary) !important;
+    background: rgba(0, 128, 128, 0.05) !important;
+    transform: translateX(10px);
+}
+
+.option-btn:active {
+    transform: scale(0.98);
+}
+
+.glass {
+    background: rgba(255, 255, 255, 0.7) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* RTL Adjustments */
+html[dir="rtl"] .option-btn:hover {
+    transform: translateX(-10px);
+}
+
+html[dir="rtl"] .option-btn {
+    text-align: right !important;
+}
+
+html[dir="rtl"] .fa-arrow-left {
+    transform: rotate(180deg);
+}
+
+.assessment-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    margin-top: 1.5rem;
+}
