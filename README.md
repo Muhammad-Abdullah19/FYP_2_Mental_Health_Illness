@@ -31,7 +31,7 @@ Noor-e-Shifa is an AI-powered platform designed to provide holistic mental healt
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/noor-e-shifa.git
+   git clone https://github.com/your-repo/FYP_1_Mental.git
    ```
 2. Install dependencies:
    ```bash
