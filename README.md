@@ -31,7 +31,7 @@ Noor-e-Shifa is an AI-powered platform designed to provide holistic mental healt
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-repo/FYP_1_Mental.git
+   git clone https://github.com/Muhammad-Abdullah19/FYP_1_Mental.git
    ```
 2. Install dependencies:
    ```bash
@@ -39,12 +39,22 @@ Noor-e-Shifa is an AI-powered platform designed to provide holistic mental healt
    ```
 3. Create a `.env` file in the root directory and add your API key:
    ```env
-   REACT_APP_GEMINI_API_KEY=your_gemini_api_key_here
+   VITE_GEMINI_API_KEY=your_gemini_api_key_here
    ```
+   > [!NOTE]
+   > The project has been migrated to Vite. While it still supports `REACT_APP_` prefixes for compatibility, using `VITE_` is recommended for new variables.
+
 4. Start the development server:
    ```bash
    npm run dev
    ```
+
+## ⚡ Vite Migration
+
+This project was recently migrated from Create React App to **Vite** for:
+- 🚀 **Faster Startup**: Near-instant dev server boot.
+- ⚡ **Hot Module Replacement (HMR)**: Lightning-fast updates during development.
+- 📦 **Optimized Builds**: Smaller and more efficient production bundles.
 
 ## 📂 Project Structure
 
