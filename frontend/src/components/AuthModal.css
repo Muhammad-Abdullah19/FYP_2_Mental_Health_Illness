@@ -99,8 +99,9 @@ html[dir="rtl"] .auth-close {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
+/* AFTER - clean version */
 .auth-form {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 0.8rem;
 }
