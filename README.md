@@ -66,4 +66,4 @@ This project was recently migrated from Create React App to **Vite** for:
 
 ## 🛡️ Disclaimer
 
-*Noor-e-Shifa provides informational guidance and emotional support. It is not a replacement for professional medical diagnosis or psychiatric treatment. Always consult with a licensed professional for serious mental health concerns.*
+*Noor-e-Shifa provides informational guidance and emotional support. It is not a replacement for professional medical diagnosis or psychiatric treatment. Always consult with a licensed professional for serious mental health concerns.*"# FYP_2_Mental_Health_Illness" 
