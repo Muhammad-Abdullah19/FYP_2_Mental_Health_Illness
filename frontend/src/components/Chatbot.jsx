@@ -7,6 +7,11 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const Chatbot = ({ currentUser }) => {
     const { currentLang, t } = useLanguage();
+    const CONDITION_LABELS_UR = {
+        Depression: 'ڈپریشن',
+        Anxiety: 'بے چینی',
+        Stress: 'ذہنی دباؤ',
+    };
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
         { type: 'bot', text: t('chat_welcome') }
@@ -53,13 +58,18 @@ const Chatbot = ({ currentUser }) => {
         setIsLoading(true);
 
         try {
-            const endpoint = `${BASE_URL}/api/chat/message/public`;
-
+            const user = currentUser ? (await import('../config/firebase')).auth.currentUser : null;
+            const token = user ? await user.getIdToken() : null;
+            const endpoint = token
+                ? `${BASE_URL}/api/chat/message`
+                : `${BASE_URL}/api/chat/message/public`;
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
             console.log('📤 Sending message to backend:', text);
 
             const res = await fetch(endpoint, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers,
                 body: JSON.stringify({
                     message: text,
                     language: currentLang
@@ -82,7 +92,10 @@ const Chatbot = ({ currentUser }) => {
                 islamic_remedy: data.islamic_remedy,
                 clinical_remedy: data.clinical_remedy,
                 condition: data.condition,
-                severity: data.severity
+                condition_confidence: data.condition_confidence,
+                condition_breakdown: data.condition_breakdown,
+                severity_percent: data.severity_percent,
+                severity_level: data.severity_level
             }]);
 
         } catch (err) {
@@ -311,20 +324,59 @@ const Chatbot = ({ currentUser }) => {
                         >
                             <p>{msg.text}</p>
 
-                            {/* Condition badge */}
-                            {msg.condition && msg.condition !== 'none' && (
-                                <div style={{
-                                    marginTop: '6px',
-                                    fontSize: '0.72rem',
-                                    color: 'var(--primary)',
-                                    fontWeight: '600'
-                                }}>
-                                    🧠 {msg.condition} —{' '}
-                                    {msg.severity > 0 && `${msg.severity}% severity`}
+                            {/* Condition analysis with percentage breakdown */}
+                            {msg.condition_breakdown && (
+                                <div style={{ marginTop: '8px', fontSize: '0.72rem' }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        color: 'var(--primary)',
+                                        fontWeight: 600,
+                                        marginBottom: '4px'
+                                    }}>
+                                        <span>🧠 {currentLang === 'ur' ? 'تجزیہ' : 'Analysis'}</span>
+                                        <span>
+                                            {currentLang === 'ur' ? 'شدت' : 'Severity'}: {msg.severity_percent}%
+                                            {msg.severity_level ? ` (${msg.severity_level})` : ''}
+                                        </span>
+                                    </div>
+
+                                    {Object.entries(msg.condition_breakdown)
+                                        .sort((a, b) => b[1] - a[1])
+                                        .map(([cond, pct]) => (
+                                            <div key={cond} style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '6px',
+                                                margin: '3px 0',
+                                                direction: currentLang === 'ur' ? 'rtl' : 'ltr'
+                                            }}>
+                                                <span style={{ width: '78px' }}>
+                                                    {currentLang === 'ur'
+                                                        ? (CONDITION_LABELS_UR[cond] || cond)
+                                                        : cond}
+                                                </span>
+                                                <div style={{
+                                                    flex: 1,
+                                                    height: '6px',
+                                                    background: 'rgba(0,0,0,0.08)',
+                                                    borderRadius: '3px',
+                                                    overflow: 'hidden'
+                                                }}>
+                                                    <div style={{
+                                                        width: `${pct}%`,
+                                                        height: '100%',
+                                                        background: 'var(--primary)',
+                                                        borderRadius: '3px'
+                                                    }} />
+                                                </div>
+                                                <span style={{ width: '34px', textAlign: 'left' }}>{pct}%</span>
+                                            </div>
+                                        ))}
                                 </div>
                             )}
 
-                            {/* Islamic remedy */}
+                            {/* Islamic remedy with reference */}
                             {msg.islamic_remedy && (
                                 <div style={{
                                     marginTop: '8px',
@@ -336,6 +388,19 @@ const Chatbot = ({ currentUser }) => {
                                     fontFamily: 'Noto Nastaliq Urdu, serif'
                                 }}>
                                     ☪️ {msg.islamic_remedy}
+                                    {msg.islamic_reference && (
+                                        <div style={{
+                                            marginTop: '4px',
+                                            fontSize: '0.68rem',
+                                            opacity: 0.75,
+                                            fontStyle: 'italic',
+                                            direction: 'ltr',
+                                            textAlign: 'left'
+                                        }}>
+                                            📖 {msg.islamic_reference}
+                                            {msg.islamic_verified === false && ' *'}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 

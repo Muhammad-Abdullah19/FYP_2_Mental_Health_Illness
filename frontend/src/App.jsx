@@ -12,6 +12,8 @@ import DisorderPage from './pages/DisorderPage';
 import IslamicTherapyPage from './pages/IslamicTherapyPage';
 import AssessmentPage from './pages/AssessmentPage';
 import HomePage from './pages/HomePage';
+import DashboardPage from './pages/DashboardPage';
+import DisclaimerModal from './components/DisclaimerModal';
 
 function AppContent() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -80,6 +82,7 @@ function AppContent() {
         <Route path="/disorders" element={<DisorderPage />} />
         <Route path="/islamic-therapy" element={<IslamicTherapyPage />} />
         <Route path="/assessment" element={<AssessmentPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
       <Footer />
       <Chatbot currentUser={currentUser} />
@@ -89,6 +92,7 @@ function AppContent() {
         onAuthSuccess={handleAuthSuccess}
       />
       <LanguageModal />
+      <DisclaimerModal />
     </Router>
   );
 }

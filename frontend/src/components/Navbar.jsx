@@ -37,6 +37,9 @@ const Navbar = ({ openAuthModal, currentUser, onLogout }) => {
                     <NavLink to="/assessment"><i className="fas fa-clipboard-list"></i> <span>{t('nav_assessments')}</span></NavLink>
                 </li>
 
+                {currentUser && (
+                    <li><NavLink to="/dashboard"><i className="fas fa-chart-line"></i> <span>{currentLang === 'ur' ? 'پیش رفت' : 'Progress'}</span></NavLink></li>
+                )}
                 <li>
                     {currentUser ? (
                         // --- LOGGED IN STATE ---

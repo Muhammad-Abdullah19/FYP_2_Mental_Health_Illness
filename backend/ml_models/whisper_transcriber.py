@@ -4,9 +4,6 @@ whisper_transcriber.py
 Handles Urdu speech transcription using Faster-Whisper.
 Runs locally on CPU — no GPU required.
 """
-"""
-whisper_transcriber.py
-"""
 
 from faster_whisper import WhisperModel
 import os
