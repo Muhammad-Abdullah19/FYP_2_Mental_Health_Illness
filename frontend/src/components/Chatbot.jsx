@@ -1,272 +1,451 @@
+//Chatbot.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import './Chatbot.css';
 import { useLanguage } from '../context/LanguageContext';
 
-const BOT_GUIDELINES = "You are Dr. AI, a helpful and empathetic medical assistant. You provide general health information but do not replace professional medical advice. Always advise users to consult a doctor for serious concerns. Keep responses concise.";
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
-const URDU_PHONETIC_MAP = {
-    'a': 'ا', 'b': 'ب', 'c': 'چ', 'd': 'د', 'e': 'ع', 'f': 'ف', 'g': 'گ', 'h': 'ہ', 'i': 'ی', 'j': 'ج',
-    'k': 'ک', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'p': 'پ', 'q': 'ق', 'r': 'ر', 's': 'س', 't': 'ت',
-    'u': 'و', 'v': 'و', 'w': 'و', 'x': 'ش', 'y': 'ے', 'z': 'ز',
-    'A': 'آ', 'B': 'ب', 'C': 'ث', 'D': 'ڈ', 'E': 'ع', 'F': 'ف', 'G': 'غ', 'H': 'ح', 'I': 'ی', 'J': 'ض',
-    'K': 'خ', 'L': 'ل', 'M': 'م', 'N': 'ں', 'O': 'و', 'P': 'ُ', 'Q': 'ق', 'R': 'ڑ', 'S': 'ش', 'T': 'ٹ',
-    'U': 'ء', 'V': 'ظ', 'W': 'و', 'X': 'ژ', 'Y': 'ی', 'Z': 'ذ',
-    ';': '؛', '?': '؟', ',': '،'
-};
-
-const Chatbot = () => {
+const Chatbot = ({ currentUser }) => {
     const { currentLang, t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState([
-        { type: 'bot', text: t('chat_welcome'), lang: currentLang }
+        { type: 'bot', text: t('chat_welcome') }
     ]);
     const [inputText, setInputText] = useState('');
-    const [isListening, setIsListening] = useState(false);
-    const chatBodyRef = useRef(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
 
-    // Update welcome message when language changes if it's the only message.
-    useEffect(() => {
-        if (messages.length === 1 && messages[0].type === 'bot') {
-            setMessages([{ type: 'bot', text: t('chat_welcome'), lang: currentLang }]);
-        }
-    }, [currentLang, t, messages.length]);
+    const chatBodyRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const audioChunksRef = useRef([]);
+    const timerRef = useRef(null);
 
-    // Translate a single piece of text using Gemini
-    const translateText = async (text, targetLang) => {
-        const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-        if (!apiKey) return text;
-
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
-        const prompt = `Translate the following text to ${targetLang === 'ur' ? 'Urdu' : 'English'}. Return ONLY the translated text:\n\n${text}`;
-
-        try {
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { maxOutputTokens: 200 }
-                })
-            });
-            if (!response.ok) return text;
-            const data = await response.json();
-            return data.candidates?.[0]?.content?.parts?.[0]?.text || text;
-        } catch (error) {
-            console.error('Translation error:', error);
-            return text;
-        }
-    };
-
-    // Auto-translate history when language changes
-    useEffect(() => {
-        const translateHistory = async () => {
-            if (messages.length <= 1) return; // Welcome message handled separately
-
-            const needsTranslation = messages.some(msg => msg.type === 'bot' && msg.lang !== currentLang);
-            if (!needsTranslation) return;
-
-            setIsLoading(true);
-            const translatedMessages = await Promise.all(
-                messages.map(async (msg) => {
-                    if (msg.type === 'bot' && msg.lang !== currentLang) {
-                        const translatedText = await translateText(msg.text, currentLang);
-                        return { ...msg, text: translatedText, lang: currentLang };
-                    }
-                    return msg;
-                })
-            );
-            setMessages(translatedMessages);
-            setIsLoading(false);
-        };
-
-        translateHistory();
-    }, [currentLang]);
-
+    // Auto scroll
     useEffect(() => {
         if (chatBodyRef.current) {
             chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
         }
     }, [messages, isOpen]);
 
-    // Fetch response from Gemini API
-    const fetchBotResponse = async (input, lang) => {
-        const apiKey = process.env.REACT_APP_GEMINI_API_KEY;
-
-        if (!apiKey) {
-            console.warn('REACT_APP_GEMINI_API_KEY is not defined in .env');
-            return "Configuration error: API key missing.";
+    // Recording timer
+    useEffect(() => {
+        if (isRecording) {
+            timerRef.current = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } else {
+            clearInterval(timerRef.current);
+            setRecordingTime(0);
         }
+        return () => clearInterval(timerRef.current);
+    }, [isRecording]);
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${apiKey}`;
+    // ---------------------------------------------------------------------------
+    // Send text to backend
+    // ---------------------------------------------------------------------------
+    const sendMessage = async (textToSend) => {
+        const text = textToSend || inputText;
+        if (!text.trim()) return;
+
+        setMessages(prev => [...prev, { type: 'user', text }]);
+        if (!textToSend) setInputText('');
+        setIsLoading(true);
 
         try {
-            const response = await fetch(apiUrl, {
+            const endpoint = `${BASE_URL}/api/chat/message/public`;
+
+            console.log('📤 Sending message to backend:', text);
+
+            const res = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                {
-                                    text: `${BOT_GUIDELINES}\n\nUser input: ${input}\nAnswer in language: ${lang === 'ur' ? 'Urdu' : 'English'}`
-                                }
-                            ]
-                        }
-                    ],
-                    generationConfig: {
-                        maxOutputTokens: 200,
-                    }
+                    message: text,
+                    language: currentLang
                 })
             });
 
-            if (!response.ok) {
-                if (response.status === 429) {
-                    return "I'm currently overloaded (Quota Exceeded). Please try again later.";
-                }
-                throw new Error(`API error: ${response.status}`);
+            console.log('📨 Backend response status:', res.status);
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Backend error');
             }
 
-            const data = await response.json();
+            const data = await res.json();
+            console.log('✅ Backend response:', data);
 
-            if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-                return data.candidates[0].content.parts[0].text;
-            } else {
-                console.error('Unexpected API response:', data);
-                return 'I am unable to process that request right now.';
-            }
+            setMessages(prev => [...prev, {
+                type: 'bot',
+                text: data.reply,
+                islamic_remedy: data.islamic_remedy,
+                clinical_remedy: data.clinical_remedy,
+                condition: data.condition,
+                severity: data.severity
+            }]);
 
-        } catch (error) {
-            console.error('Chatbot API error:', error);
-            return 'Sorry, I am having trouble connecting to the server.';
-        }
-    };
-
-    const speak = (text, lang) => {
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang === 'ur' ? 'ur-PK' : 'en-US';
-            utterance.rate = 0.9;
-            utterance.pitch = 1;
-            window.speechSynthesis.speak(utterance);
-        }
-    };
-
-    const sendMessage = async () => {
-        if (!inputText.trim()) return;
-
-        const userMsg = { type: 'user', text: inputText, lang: currentLang };
-        setMessages(prev => [...prev, userMsg]);
-        const textToSend = inputText;
-        setInputText('');
-
-        setIsLoading(true);
-        try {
-            const responseText = await fetchBotResponse(textToSend, currentLang);
-            setMessages(prev => [...prev, { type: 'bot', text: responseText, lang: currentLang }]);
-            speak(responseText, currentLang);
+        } catch (err) {
+            console.error('❌ sendMessage error:', err);
+            setMessages(prev => [...prev, {
+                type: 'bot',
+                text: currentLang === 'ur'
+                    ? 'معذرت، سرور سے جواب نہیں ملا۔ دوبارہ کوشش کریں۔'
+                    : 'Sorry, could not reach the server. Please try again.'
+            }]);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const startVoice = () => {
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
+    // ---------------------------------------------------------------------------
+    // Start recording
+    // ---------------------------------------------------------------------------
+    const startRecording = async () => {
+        console.log('🎙️ Starting recording...');
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: { channelCount: 1, sampleRate: 16000 }
+            });
 
-            recognition.lang = currentLang === 'ur' ? 'ur-PK' : 'en-US';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
+            console.log('✅ Microphone access granted');
+            audioChunksRef.current = [];
 
-            setIsListening(true);
-            recognition.start();
+            // Find best supported format
+            let mimeType = 'audio/webm;codecs=opus';
+            if (!MediaRecorder.isTypeSupported(mimeType)) {
+                mimeType = 'audio/webm';
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                    mimeType = 'audio/ogg;codecs=opus';
+                    if (!MediaRecorder.isTypeSupported(mimeType)) {
+                        mimeType = '';
+                    }
+                }
+            }
+            console.log('🎵 mimeType:', mimeType || 'browser default');
 
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                setInputText(transcript);
-                // toggle listening off?
-                // sendMessage(); // Optional auto-send
+            const mediaRecorder = new MediaRecorder(
+                stream,
+                mimeType ? { mimeType } : {}
+            );
+
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    audioChunksRef.current.push(e.data);
+                    console.log('📦 Chunk:', e.data.size, 'bytes');
+                }
             };
 
-            recognition.onend = () => setIsListening(false);
-            recognition.onerror = () => setIsListening(false);
-        } else {
-            alert("Voice recognition not supported in this browser.");
+            mediaRecorder.onstop = async () => {
+                stream.getTracks().forEach(t => t.stop());
+                console.log('⏹️ Recording stopped, chunks:', audioChunksRef.current.length);
+
+                const audioBlob = new Blob(audioChunksRef.current, {
+                    type: mimeType || 'audio/webm'
+                });
+                console.log('📦 Final blob:', audioBlob.size, 'bytes');
+                await transcribeAudio(audioBlob);
+            };
+
+            mediaRecorder.onerror = (e) => {
+                console.error('❌ MediaRecorder error:', e.error);
+            };
+
+            mediaRecorderRef.current = mediaRecorder;
+            mediaRecorder.start(100);
+            setIsRecording(true);
+            console.log('✅ Recording started');
+
+            setTimeout(() => {
+                if (mediaRecorderRef.current?.state === 'recording') {
+                    stopRecording();
+                }
+            }, 30000);
+
+        } catch (err) {
+            console.error('❌ Mic error:', err.name, err.message);
+            alert(err.name === 'NotAllowedError'
+                ? (currentLang === 'ur'
+                    ? 'مائیکروفون کی اجازت درکار ہے'
+                    : 'Microphone permission required')
+                : 'Microphone error: ' + err.message
+            );
         }
     };
 
-    const handleInputChange = (e) => {
-        const val = e.target.value;
-        if (currentLang !== 'ur') {
-            setInputText(val);
+    // ---------------------------------------------------------------------------
+    // Stop recording
+    // ---------------------------------------------------------------------------
+    const stopRecording = () => {
+        console.log('⏹️ Stopping recording...');
+        if (mediaRecorderRef.current?.state === 'recording') {
+            mediaRecorderRef.current.stop();
+            setIsRecording(false);
+        }
+    };
+
+    // ---------------------------------------------------------------------------
+    // Transcribe audio via backend
+    // ---------------------------------------------------------------------------
+    const transcribeAudio = async (audioBlob) => {
+        console.log('🎙️ Transcribing audio...');
+        console.log('📦 Blob size:', audioBlob.size, 'type:', audioBlob.type);
+
+        if (audioBlob.size === 0) {
+            console.error('❌ Empty audio blob');
+            setMessages(prev => [...prev, {
+                type: 'bot',
+                text: currentLang === 'ur'
+                    ? 'آواز ریکارڈ نہیں ہوئی۔ دوبارہ کوشش کریں۔'
+                    : 'No audio recorded. Please try again.'
+            }]);
             return;
         }
 
-        // Logic for phonetic mapping
-        const prevVal = inputText;
-        if (val.length > prevVal.length) {
-            const lastChar = val.slice(-1);
-            const mappedChar = URDU_PHONETIC_MAP[lastChar];
-            if (mappedChar) {
-                setInputText(prevVal + mappedChar);
-                return;
+        setIsLoading(true);
+        setMessages(prev => [...prev, {
+            type: 'bot',
+            text: currentLang === 'ur'
+                ? '🎙️ آواز پہچانی جا رہی ہے...'
+                : '🎙️ Transcribing...',
+            isTemporary: true
+        }]);
+
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            formData.append('language', currentLang === 'ur' ? 'ur' : 'en');
+
+            console.log('📤 POST to /api/voice/transcribe');
+
+            const res = await fetch(`${BASE_URL}/api/voice/transcribe`, {
+                method: 'POST',
+                body: formData
+            });
+
+            console.log('📨 Transcribe response:', res.status);
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.detail || 'Transcription failed');
             }
+
+            const data = await res.json();
+            console.log('✅ Transcription:', data);
+
+            setMessages(prev => prev.filter(m => !m.isTemporary));
+
+            if (data.text) {
+                setMessages(prev => [...prev, {
+                    type: 'user',
+                    text: `🎙️ ${data.text}`,
+                    isVoice: true
+                }]);
+                await sendMessage(data.text);
+            } else {
+                setMessages(prev => [...prev, {
+                    type: 'bot',
+                    text: currentLang === 'ur'
+                        ? 'آواز نہیں سنی گئی۔ دوبارہ بولیں۔'
+                        : 'No speech detected. Please try again.'
+                }]);
+            }
+
+        } catch (err) {
+            console.error('❌ Transcription error:', err);
+            setMessages(prev => prev.filter(m => !m.isTemporary));
+            setMessages(prev => [...prev, {
+                type: 'bot',
+                text: currentLang === 'ur'
+                    ? `آواز کی خرابی: ${err.message}`
+                    : `Transcription error: ${err.message}`
+            }]);
+        } finally {
+            setIsLoading(false);
         }
-        setInputText(val);
     };
 
+    // ---------------------------------------------------------------------------
+    // Render
+    // ---------------------------------------------------------------------------
     return (
         <>
             {!isOpen && (
-                <div className="chatbot-toggle floating" onClick={() => setIsOpen(!isOpen)}>
+                <div
+                    className="chatbot-toggle floating"
+                    onClick={() => setIsOpen(true)}
+                >
                     <i className="fas fa-comments"></i>
                 </div>
             )}
 
-            <div className="chat-window" style={{ display: isOpen ? 'flex' : 'none' }}>
+            <div
+                className="chat-window"
+                style={{ display: isOpen ? 'flex' : 'none' }}
+            >
+                {/* Header */}
                 <div className="chat-header">
                     <i className="fas fa-robot"></i>
                     <div>
                         <h4>Dr. AI Assistant</h4>
-                        <small><span className="status-dot"></span> <span>{t('chat_status')}</span></small>
+                        <small>
+                            <span className="status-dot"></span>
+                            {' '}{t('chat_status')}
+                        </small>
                     </div>
-                    <i className="fas fa-times" style={{ marginInlineStart: 'auto', cursor: 'pointer' }} onClick={() => setIsOpen(false)}></i>
+                    <i
+                        className="fas fa-times"
+                        style={{ marginInlineStart: 'auto', cursor: 'pointer' }}
+                        onClick={() => setIsOpen(false)}
+                    />
                 </div>
+
+                {/* Messages */}
                 <div className="chat-body" ref={chatBodyRef}>
                     {messages.map((msg, idx) => (
-                        <div key={idx} className={`message ${msg.type === 'bot' ? 'bot-msg' : 'user-msg'}`}>
+                        <div
+                            key={idx}
+                            className={`message ${msg.type === 'bot'
+                                ? 'bot-msg'
+                                : 'user-msg'}`}
+                        >
                             <p>{msg.text}</p>
+
+                            {/* Condition badge */}
+                            {msg.condition && msg.condition !== 'none' && (
+                                <div style={{
+                                    marginTop: '6px',
+                                    fontSize: '0.72rem',
+                                    color: 'var(--primary)',
+                                    fontWeight: '600'
+                                }}>
+                                    🧠 {msg.condition} —{' '}
+                                    {msg.severity > 0 && `${msg.severity}% severity`}
+                                </div>
+                            )}
+
+                            {/* Islamic remedy */}
+                            {msg.islamic_remedy && (
+                                <div style={{
+                                    marginTop: '8px',
+                                    padding: '8px',
+                                    background: 'rgba(0,128,128,0.05)',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    borderRight: '3px solid var(--primary)',
+                                    fontFamily: 'Noto Nastaliq Urdu, serif'
+                                }}>
+                                    ☪️ {msg.islamic_remedy}
+                                </div>
+                            )}
+
+                            {/* Clinical remedy */}
+                            {msg.clinical_remedy && (
+                                <div style={{
+                                    marginTop: '6px',
+                                    padding: '8px',
+                                    background: 'rgba(32,178,170,0.05)',
+                                    borderRadius: '8px',
+                                    fontSize: '0.75rem',
+                                    borderLeft: '3px solid var(--primary-light)'
+                                }}>
+                                    🏥 {msg.clinical_remedy}
+                                </div>
+                            )}
                         </div>
                     ))}
+
+                    {isLoading && (
+                        <div className="message bot-msg">
+                            <p>
+                                <i className="fas fa-circle-notch fa-spin"></i>
+                                {' '}{currentLang === 'ur'
+                                    ? 'جواب تیار ہو رہا ہے...'
+                                    : 'Preparing response...'}
+                            </p>
+                        </div>
+                    )}
                 </div>
-                {isLoading && (
-                    <div className="loading-spinner" style={{ textAlign: 'center', padding: '8px' }}>
-                        Loading...
+
+                {/* Recording Banner */}
+                {isRecording && (
+                    <div style={{
+                        background: '#ffebee',
+                        color: '#c62828',
+                        textAlign: 'center',
+                        padding: '6px',
+                        fontSize: '0.85rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px'
+                    }}>
+                        <span style={{
+                            width: '8px',
+                            height: '8px',
+                            background: 'red',
+                            borderRadius: '50%',
+                            display: 'inline-block',
+                            animation: 'pulse-soft 1s infinite'
+                        }}></span>
+                        {currentLang === 'ur'
+                            ? `ریکارڈنگ ${recordingTime}s`
+                            : `Recording ${recordingTime}s`}
+                        {' — '}
+                        {currentLang === 'ur'
+                            ? 'روکنے کے لیے دبائیں'
+                            : 'tap to stop'}
                     </div>
                 )}
-                <div className="chat-input" dir={currentLang === 'ur' ? 'rtl' : 'ltr'}>
+
+                {/* Input */}
+                <div
+                    className="chat-input"
+                    dir={currentLang === 'ur' ? 'rtl' : 'ltr'}
+                >
                     <input
                         type="text"
                         placeholder={t('chat_placeholder')}
                         value={inputText}
-                        onChange={handleInputChange}
+                        onChange={(e) => setInputText(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                        lang={currentLang}
+                        disabled={isRecording || isLoading}
                     />
+
                     <button
-                        onClick={startVoice}
-                        style={{ color: isListening ? '#ff4444' : 'white', animation: isListening ? 'pulse-soft 1s infinite' : 'none' }}
+                        onClick={isRecording ? stopRecording : startRecording}
+                        style={{
+                            background: isRecording ? '#e53935' : 'var(--primary)',
+                            animation: isRecording
+                                ? 'pulse-soft 1s infinite'
+                                : 'none'
+                        }}
+                        title={isRecording ? 'Stop' : 'Voice input'}
                     >
-                        <i className="fas fa-microphone"></i>
+                        <i className={`fas ${isRecording
+                            ? 'fa-stop'
+                            : 'fa-microphone'}`}
+                        ></i>
                     </button>
-                    <button onClick={sendMessage}><i className="fas fa-paper-plane"></i></button>
+
+                    <button
+                        onClick={() => sendMessage()}
+                        disabled={isRecording || isLoading || !inputText.trim()}
+                        title="Send"
+                    >
+                        <i className="fas fa-paper-plane"></i>
+                    </button>
                 </div>
-                <div style={{ fontSize: '0.7rem', color: '#ccc', textAlign: 'center', padding: '5px' }}>
-                    Note: Dr. AI provides information, not medical diagnosis.
+
+                <div style={{
+                    fontSize: '0.7rem',
+                    color: '#aaa',
+                    textAlign: 'center',
+                    padding: '4px'
+                }}>
+                    {currentLang === 'ur'
+                        ? 'Dr. AI معلومات فراہم کرتا ہے، تشخیص نہیں'
+                        : 'Dr. AI provides info, not medical diagnosis'}
                 </div>
             </div>
         </>

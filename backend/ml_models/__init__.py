@@ -1,1 +1,1 @@
-# Noor-e-Shifa ML models package
+# ML models package
