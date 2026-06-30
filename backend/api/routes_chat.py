@@ -38,6 +38,8 @@ class ChatResponse(BaseModel):
     islamic_reference: Optional[str] = None
     islamic_verified: Optional[bool] = None
     clinical_remedy: Optional[str] = None
+    clinical_reference: Optional[str] = None
+    clinical_verified: Optional[bool] = None
 
 
 def _to_response(result: dict) -> ChatResponse:
@@ -56,6 +58,8 @@ def _to_response(result: dict) -> ChatResponse:
         islamic_reference=result.get("islamic_reference"),
         islamic_verified=result.get("islamic_verified"),
         clinical_remedy=result["clinical_remedy"],
+        clinical_reference=result.get("clinical_reference"),
+        clinical_verified=result.get("clinical_verified"),
     )
 
 

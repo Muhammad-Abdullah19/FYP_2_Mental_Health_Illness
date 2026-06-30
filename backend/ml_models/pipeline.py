@@ -177,10 +177,10 @@ def run_pipeline(text: str) -> dict:
     pool = RESPONSES.get(condition, RESPONSES["Stress"]).get(key, [])
     response_text = _pick(pool, f"{condition}:{key}")
 
-    # Islamic remedy is now a dict {text, reference, verified}; clinical is a plain string.
+    # Islamic and clinical remedies are both dicts {text, reference, verified}.
     islamic_item = _pick_item(ISLAMIC_REMEDIES.get(
         condition, []), f"islamic:{condition}")
-    clinical = _pick(CLINICAL_REMEDIES.get(
+    clinical_item = _pick_item(CLINICAL_REMEDIES.get(
         condition, []), f"clinical:{condition}")
 
     # Crisis overrides the conversational reply with the fixed helpline message.
@@ -203,7 +203,9 @@ def run_pipeline(text: str) -> dict:
         "islamic_remedy": islamic_item["text"],
         "islamic_reference": islamic_item["reference"],
         "islamic_verified": islamic_item["verified"],
-        "clinical_remedy": clinical,
+        "clinical_remedy": clinical_item["text"],
+        "clinical_reference": clinical_item["reference"],
+        "clinical_verified": clinical_item["verified"],
         "model_source": {"condition": cond_source, "severity": sev_source},
     }
     logger.info("Pipeline complete: %s | %s | crisis=%s | source=%s",
